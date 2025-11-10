@@ -12,9 +12,16 @@
 <nav class="navbar navbar-expand-lg border-bottom">
   <div class="container">
     <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">ValidaCursos</a>
-    <div>
-      <a class="btn btn-outline-light btn-sm me-2" href="{{ url_for('home') }}">Upload</a>
-      <a class="btn btn-primary btn-sm" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <div class="d-flex gap-2">
+      {% if session.get('user_id') %}
+        <span class="navbar-text me-2">Olá, {{ session.get('user_name') }}</span>
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('home') }}">Upload</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a class="btn btn-danger btn-sm" href="{{ url_for('logout') }}">Sair</a>
+      {% else %}
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('login') }}">Login</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('register') }}">Registrar</a>
+      {% endif %}
     </div>
   </div>
 </nav>
@@ -22,11 +29,9 @@
 <main class="container my-4">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div>
-        {% for category, message in messages %}
-          <div class="alert alert-{{category}}">{{ message }}</div>
-        {% endfor %}
-      </div>
+      {% for category, message in messages %}
+        <div class="alert alert-{{category}}">{{ message }}</div>
+      {% endfor %}
     {% endif %}
   {% endwith %}
   {% block content %}{% endblock %}
