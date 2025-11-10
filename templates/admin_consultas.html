@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="m-0">Consultas dos Usuários</h3>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="btn btn-success btn-sm" href="{{ url_for('admin_consultas_csv') }}">Exportar CSV</a>
+  </div>
+</div>
+
+<div class="card p-3">
+  <div class="row g-2 align-items-center mb-2">
+    <div class="col-sm-6 col-md-4">
+      <input id="filtro" type="text" class="form-control" placeholder="Filtrar por usuário, modelo, saída, alvo...">
+    </div>
+    <div class="col text-end small text-secondary">
+      Total: <b id="total">{{ logs|length }}</b>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle" id="tabela">
+      <thead class="table-dark">
+        <tr>
+          <th>#</th>
+          <th>Data</th>
+          <th>Usuário</th>
+          <th>Modelo</th>
+          <th>Alvo</th>
+          <th>Tarefa</th>
+          <th>Entrada</th>
+          <th>Saída</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in logs %}
+          <tr>
+            <td class="text-secondary">{{ r.id }}</td>
+            <td class="text-secondary">{{ r.created_at }}</td>
+            <td>
+              <div class="fw-semibold">{{ r.user_name }}</div>
+              <div class="small text-secondary">{{ r.user_email }}</div>
+            </td>
+            <td><code class="small">{{ r.model_id }}</code></td>
+            <td>{{ r.target }}</td>
+            <td>
+              <span class="badge bg-info text-dark">{{ r.task }}</span>
+            </td>
+            <td style="max-width: 340px;">
+              <details>
+                <summary class="small text-info" style="cursor:pointer">ver entrada</summary>
+                <pre class="small text-break mb-0">{{ r.input_json }}</pre>
+              </details>
+            </td>
+            <td><b>{{ r.output }}</b></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const filtro = document.getElementById('filtro');
+  const tbody  = document.querySelector('#tabela tbody');
+  const total  = document.getElementById('total');
+
+  filtro.addEventListener('input', () => {
+    const q = filtro.value.trim().toLowerCase();
+    let count = 0;
+    for (const tr of tbody.rows) {
+      const txt = tr.innerText.toLowerCase();
+      const show = !q || txt.includes(q);
+      tr.style.display = show ? '' : 'none';
+      if (show) count++;
+    }
+    total.textContent = count;
+  });
+</script>
+
+{% endblock %}

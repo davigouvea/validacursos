@@ -1,103 +1,202 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row g-4">
-  <div class="col-lg-4">
-    <div class="card p-3">
-      <h5>Filtros & Treinamento</h5>
-      <div class="mb-2">
-        <label class="form-label">Alvo (target):</label>
-        <select id="target" class="form-select">
-          {% for c in cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
-        </select>
-        <small class="text-secondary">Se numérico ➜ regressão; senão ➜ classificação.</small>
-      </div>
-      <div class="mb-2">
-        <label class="form-label">Features (segure CTRL para múltiplas):</label>
-        <select id="features" class="form-select" multiple size="6">
-          {% for c in cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="mb-2">
-        <label class="form-label">Modelo:</label>
-        <select id="model" class="form-select">
-          <option>RandomForest</option>
-          <option>DecisionTree</option>
-          <option>KNN</option>
-          <option>LinearRegression</option>
-          <option>LogisticRegression</option>
-        </select>
-      </div>
-      <button class="btn btn-primary w-100" id="btnTrain">Treinar/Atualizar Modelo</button>
-      <div id="trainOut" class="small text-secondary mt-2"></div>
 
-      <hr>
-      <h6>Predição rápida</h6>
-      <div id="predictInputs" class="mb-2"></div>
-      <div class="d-grid gap-2">
-        <button class="btn btn-outline-light" id="btnPredict">Prever</button>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="m-0">Dashboard Admin</h3>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{{ url_for('home') }}">Upload/Dataset</a>
+    <a class="btn btn-outline-info btn-sm" href="{{ url_for('admin_consultas') }}">Consultas</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Painel de treino -->
+  <div class="col-lg-4">
+    <div class="card p-3 h-100">
+      <h5 class="mb-3">Treinar Modelo</h5>
+
+      <label class="form-label small">Alvo (target)</label>
+      <select id="target" class="form-select mb-2">
+        {% for c in cols %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+      </select>
+      <div class="form-text mb-2">Se for numérico → regressão; senão → classificação.</div>
+
+      <label class="form-label small">Features (segure CTRL para múltiplas)</label>
+      <select id="features" class="form-select mb-3" multiple size="8">
+        {% for c in cols %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+      </select>
+
+      <label class="form-label small">Modelo</label>
+      <select id="model" class="form-select mb-3">
+        <option value="RandomForest">RandomForest</option>
+        <option value="DecisionTree">DecisionTree</option>
+        <option value="KNN">KNN</option>
+        <option value="LinearRegression">LinearRegression</option>
+        <option value="LogisticRegression">LogisticRegression</option>
+      </select>
+
+      <button id="btn-train" class="btn btn-primary w-100">Treinar</button>
+
+      <hr class="my-3">
+      <div>
+        <h6 class="mb-2">Modelos Salvos</h6>
+        {% if models %}
+          <ul class="list-group list-group-flush">
+            {% for m in models %}
+              <li class="list-group-item bg-transparent text-light">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="fw-semibold">{{ m.id }}</div>
+                    <div class="small text-secondary">alvo: {{ m.target }} • tarefa: {{ m.task }}</div>
+                  </div>
+                  {% if m.metrics %}
+                    <code class="small">{{ m.metrics }}</code>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-secondary small">Nenhum modelo treinado ainda.</div>
+        {% endif %}
       </div>
-      <div id="predOut" class="small text-info mt-2"></div>
     </div>
   </div>
 
+  <!-- Gráficos -->
   <div class="col-lg-8">
-    <div class="card p-3">
-      <h5>Dashboards</h5>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Gráfico de barras / pizza (coluna categórica):</label>
-          <div class="input-group">
-            <select id="catCol" class="form-select">
-              {% for c in cat_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
-            </select>
-            <button id="btnBar" class="btn btn-outline-light">Barras</button>
-            <button id="btnPie" class="btn btn-outline-light">Pizza</button>
-          </div>
-          <div id="plot_cat" style="height:360px"></div>
+    <div class="card p-3 mb-3">
+      <div class="d-flex align-items-end gap-2 flex-wrap">
+        <div>
+          <label class="form-label small">Barras/Pizza (coluna categórica)</label>
+          <select id="cat-col" class="form-select">
+            {% for c in cat_cols %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Dispersão (duas numéricas + cor):</label>
-          <div class="input-group">
-            <select id="numX" class="form-select">
-              {% for c in num_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
-            </select>
-            <select id="numY" class="form-select">
-              {% for c in num_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
-            </select>
-            <select id="colorBy" class="form-select">
-              <option value="">(sem cor)</option>
-              {% for c in cat_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
-            </select>
-            <button id="btnScatter" class="btn btn-outline-light">Plotar</button>
+        <div class="ms-auto">
+          <div class="btn-group">
+            <button id="btn-bar" class="btn btn-outline-light btn-sm">Barras</button>
+            <button id="btn-pie" class="btn btn-outline-light btn-sm">Pizza</button>
           </div>
-          <div id="plot_scatter" style="height:360px"></div>
         </div>
       </div>
+      <div id="plot_cat" style="height:360px"></div>
+    </div>
 
-      <div class="mt-3">
-        <h6>Correlação (matriz)</h6>
-        <div id="plot_corr" style="height:420px"></div>
+    <div class="card p-3 mb-3">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <label class="form-label small">X (numérico)</label>
+          <select id="x-col" class="form-select">
+            {% for c in num_cols %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">Y (numérico)</label>
+          <select id="y-col" class="form-select">
+            {% for c in num_cols %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">Cor (categórica - opcional)</label>
+          <select id="color-col" class="form-select">
+            <option value="">(sem cor)</option>
+            {% for c in cat_cols %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
       </div>
+      <div class="text-end mt-2">
+        <button id="btn-scatter" class="btn btn-outline-light btn-sm">Plotar Dispersão</button>
+      </div>
+      <div id="plot_scatter" style="height:360px"></div>
+    </div>
+
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h6 class="m-0">Correlação (matriz)</h6>
+        <button id="btn-corr" class="btn btn-outline-light btn-sm">Atualizar</button>
+      </div>
+      <div id="plot_corr" style="height:360px"></div>
     </div>
   </div>
 </div>
 
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <script>
-// Render iniciais vindos do backend (se existirem)
-{% if pie_json %}
-  const pieObj = {{ pie_json | safe }};
-  Plotly.newPlot('plot_cat', pieObj.data, pieObj.layout);
-{% endif %}
+  // Render inicial vindo do backend (se existir)
+  {% if pie_json %}Plotly.newPlot('plot_cat', {{ pie_json|safe }}.data, {{ pie_json|safe }}.layout);{% endif %}
+  {% if scatter_json %}Plotly.newPlot('plot_scatter', {{ scatter_json|safe }}.data, {{ scatter_json|safe }}.layout);{% endif %}
+  {% if corr_json %}Plotly.newPlot('plot_corr', {{ corr_json|safe }}.data, {{ corr_json|safe }}.layout);{% endif %}
 
-{% if scatter_json %}
-  const scatterObj = {{ scatter_json | safe }};
-  Plotly.newPlot('plot_scatter', scatterObj.data, scatterObj.layout);
-{% endif %}
+  // Troca barra/pizza
+  document.getElementById('btn-bar').onclick = async () => {
+    const col = document.getElementById('cat-col').value;
+    const r = await fetch("{{ url_for('chart') }}", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({kind:"bar", col})
+    });
+    const fig = await r.json();
+    Plotly.newPlot('plot_cat', fig.data, fig.layout);
+  };
+  document.getElementById('btn-pie').onclick = async () => {
+    const col = document.getElementById('cat-col').value;
+    const r = await fetch("{{ url_for('chart') }}", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({kind:"pie", col})
+    });
+    const fig = await r.json();
+    Plotly.newPlot('plot_cat', fig.data, fig.layout);
+  };
 
-{% if corr_json %}
-  const corrObj = {{ corr_json | safe }};
-  Plotly.newPlot('plot_corr', corrObj.data, corrObj.layout);
-{% endif %}
+  // Dispersão
+  document.getElementById('btn-scatter').onclick = async () => {
+    const x = document.getElementById('x-col').value;
+    const y = document.getElementById('y-col').value;
+    const color = document.getElementById('color-col').value || null;
+    const r = await fetch("{{ url_for('chart') }}", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({kind:"scatter", x, y, color})
+    });
+    const fig = await r.json();
+    Plotly.newPlot('plot_scatter', fig.data, fig.layout);
+  };
+
+  // Correlação
+  document.getElementById('btn-corr').onclick = async () => {
+    const r = await fetch("{{ url_for('chart') }}", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({kind:"corr"})
+    });
+    const fig = await r.json();
+    if (fig && fig.data) Plotly.newPlot('plot_corr', fig.data, fig.layout);
+  };
+
+  // Treino
+  document.getElementById('btn-train').onclick = async () => {
+    const target = document.getElementById('target').value;
+    const features = Array.from(document.getElementById('features').selectedOptions).map(o => o.value);
+    const model = document.getElementById('model').value;
+    if (!target || features.length === 0) {
+      alert("Selecione alvo e ao menos uma feature.");
+      return;
+    }
+    const r = await fetch("{{ url_for('train') }}", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({target, features, model})
+    });
+    const data = await r.json();
+    if (data.error) {
+      alert("Erro: " + data.error);
+    } else {
+      alert("Modelo treinado!\nID: " + data.model_id + "\n\nMétricas: " + JSON.stringify(data.metrics));
+      location.reload();
+    }
+  };
 </script>
 
 {% endblock %}
