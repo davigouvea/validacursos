@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <h5>Filtros & Treinamento</h5>
+      <div class="mb-2">
+        <label class="form-label">Alvo (target):</label>
+        <select id="target" class="form-select">
+          {% for c in cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
+        </select>
+        <small class="text-secondary">Se numérico ➜ regressão; senão ➜ classificação.</small>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Features (segure CTRL para múltiplas):</label>
+        <select id="features" class="form-select" multiple size="6">
+          {% for c in cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Modelo:</label>
+        <select id="model" class="form-select">
+          <option>RandomForest</option>
+          <option>DecisionTree</option>
+          <option>KNN</option>
+          <option>LinearRegression</option>
+          <option>LogisticRegression</option>
+        </select>
+      </div>
+      <button class="btn btn-primary w-100" id="btnTrain">Treinar/Atualizar Modelo</button>
+      <div id="trainOut" class="small text-secondary mt-2"></div>
+
+      <hr>
+      <h6>Predição rápida</h6>
+      <div id="predictInputs" class="mb-2"></div>
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-light" id="btnPredict">Prever</button>
+      </div>
+      <div id="predOut" class="small text-info mt-2"></div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card p-3">
+      <h5>Dashboards</h5>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Gráfico de barras / pizza (coluna categórica):</label>
+          <div class="input-group">
+            <select id="catCol" class="form-select">
+              {% for c in cat_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
+            </select>
+            <button id="btnBar" class="btn btn-outline-light">Barras</button>
+            <button id="btnPie" class="btn btn-outline-light">Pizza</button>
+          </div>
+          <div id="plot_cat" style="height:360px"></div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Dispersão (duas numéricas + cor):</label>
+          <div class="input-group">
+            <select id="numX" class="form-select">
+              {% for c in num_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
+            </select>
+            <select id="numY" class="form-select">
+              {% for c in num_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
+            </select>
+            <select id="colorBy" class="form-select">
+              <option value="">(sem cor)</option>
+              {% for c in cat_cols %}<option value="{{c}}">{{c}}</option>{% endfor %}
+            </select>
+            <button id="btnScatter" class="btn btn-outline-light">Plotar</button>
+          </div>
+          <div id="plot_scatter" style="height:360px"></div>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <h6>Correlação (matriz)</h6>
+        <div id="plot_corr" style="height:420px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Render iniciais vindos do backend (se existirem)
+{% if pie_json %}
+  const pieObj = {{ pie_json | safe }};
+  Plotly.newPlot('plot_cat', pieObj.data, pieObj.layout);
+{% endif %}
+
+{% if scatter_json %}
+  const scatterObj = {{ scatter_json | safe }};
+  Plotly.newPlot('plot_scatter', scatterObj.data, scatterObj.layout);
+{% endif %}
+
+{% if corr_json %}
+  const corrObj = {{ corr_json | safe }};
+  Plotly.newPlot('plot_corr', corrObj.data, corrObj.layout);
+{% endif %}
+</script>
+
+{% endblock %}

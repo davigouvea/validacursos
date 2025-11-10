@@ -1,0 +1,4 @@
+body { background: #0b0f14; color: #e9eef3; }
+.card { background:#121821; border:1px solid #1f2a37; border-radius:14px; }
+.navbar { background:#0c121a; }
+.table { --bs-table-bg: transparent; }
